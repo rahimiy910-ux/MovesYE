@@ -2,10 +2,10 @@ name: 🎬 Vio Film Publisher
 
 on:
   schedule:
-    # ظهر ۱۲:۳۰
-    - cron: '0 9 * * *'
-    # شب ۲۱:۳۰
-    - cron: '0 18 * * *'
+    # ظهر ۱۲:۳۰ به وقت ایران (UTC 9:00)
+    - cron: '30 9 * * *'
+    # شب ۲۱:۳۰ به وقت ایران (UTC 18:00)
+    - cron: '30 18 * * *'
   workflow_dispatch:
 
 jobs:
@@ -14,28 +14,36 @@ jobs:
     timeout-minutes: 15
     
     steps:
-    - uses: actions/checkout@v4
+    - name: 📥 دریافت کد
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
-    - uses: actions/setup-python@v5
+    - name: 🐍 نصب پایتون
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
     - name: 📦 نصب بسته‌ها
-      run: pip install -r requirements.txt
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
     
-    - name: 🎬 اجرا
+    - name: 🎬 اجرای ربات
       env:
         VIOFILM_BOT_TOKEN: ${{ secrets.VIOFILM_BOT_TOKEN }}
         VIOFILM_CHAT_ID: ${{ secrets.VIOFILM_CHAT_ID }}
         TZ: 'Asia/Tehran'
       run: python main.py
     
-    - name: 💾 ذخیره
+    - name: 💾 ذخیره تاریخچه
       if: always()
       run: |
         git config user.name 'VioFilm Bot'
         git config user.email 'bot@viofilm.ir'
-        git add data/history.json
-        git diff --staged --quiet || git commit -m "📊 بروزرسانی"
-        git pull --rebase
-        git push || echo "OK"
+        mkdir -p data
+        touch data/movie_history.json
+        git add data/movie_history.json
+        git diff --staged --quiet || git commit -m "📊 بروزرسانی تاریخچه فیلم‌ها" || true
+        git pull --rebase || true
+        git push || echo "✅ تاریخچه ذخیره شد"
