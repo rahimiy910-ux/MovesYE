@@ -13,6 +13,9 @@ import os
 from datetime import datetime
 import traceback
 
+# اضافه کردن مسیر پوشه scripts (چون فایل‌ها در آنجا هستند)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'scripts'))
+
 from movie_finder import get_todays_movies
 from movie_sender import send_movie_post
 
