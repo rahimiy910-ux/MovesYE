@@ -9,6 +9,7 @@
 import os
 import asyncio
 import random
+import re
 from datetime import datetime
 from telegram import Bot
 from telegram.constants import ParseMode
@@ -32,6 +33,14 @@ RATING_STARS = {
     (6.0, 6.9): "⭐️⭐️",
     (0, 5.9): "⭐️"
 }
+
+def escape_markdown(text):
+    """ایسکیپ کاراکترهای خاص مارکداون تلگرام"""
+    if not text:
+        return text
+    # کاراکترهایی که باید ایسکیپ شوند
+    special_chars = r'([_*\[\]()~`>#+\-=|{}.!\\])'
+    return re.sub(special_chars, r'\\\1', str(text))
 
 def get_stars(rating):
     try:
@@ -85,18 +94,23 @@ def format_movie_post(movie, time_name):
     duration = movie.get('duration', 'نامشخص')
     imdb_link = movie.get('imdb_link', 'https://www.imdb.com')
     
+    # ایسکیپ کردن متن برای مارکداون
+    title = escape_markdown(title)
+    summary = escape_markdown(summary)
+    director = escape_markdown(director)
+    
     # پردازش
     stars = get_stars(rating)
     
-    # ژانر با ایموجی
+    # ژانر با ایموجی (نیاز به ایسکیپ ندارند)
     genre_parts = []
     for g in genres[:3]:
         emoji = GENRE_EMOJI.get(g, '🎬')
         genre_parts.append(f"{emoji} {g}")
     genre_text = "  |  ".join(genre_parts) if genre_parts else "🎬 فیلم"
     
-    # بازیگران
-    cast_text = "، ".join(cast[:5]) if cast else "بازیگران برجسته"
+    # بازیگران (ایسکیپ هر کدام)
+    cast_text = "، ".join([escape_markdown(actor) for actor in cast[:5]]) if cast else "بازیگران برجسته"
     
     # خلاصه (محدود)
     if len(summary) > 400:
@@ -107,9 +121,6 @@ def format_movie_post(movie, time_name):
     # ایموجی پست
     time_emoji = get_time_emoji()
     greeting = get_greeting(time_name)
-    
-    # شماره تصادفی برای تنوع
-    post_number = random.randint(100, 999)
     
     # ساخت کپشن
     caption = f"""{time_emoji} {greeting}
@@ -194,6 +205,20 @@ async def send_movie_post(movie, time_name="شب"):
             print("   ❌ کانال پیدا نشد")
         elif "not enough rights" in error_msg.lower():
             print("   ❌ ربات ادمین نیست")
+        elif "can't parse entities" in error_msg.lower():
+            print("   ❌ مشکل در قالب متن - ارسال بدون مارکداون")
+            # تلاش مجدد بدون مارکداون
+            try:
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=caption,
+                    parse_mode=None,
+                    disable_web_page_preview=False
+                )
+                print("   ✅ ارسال شد (بدون فرمت)")
+                return True
+            except:
+                pass
         else:
             print(f"   ❌ خطا: {error_msg[:80]}")
         return False
