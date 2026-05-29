@@ -77,14 +77,13 @@ def format_movie_post(movie, time_name):
     title = movie.get('title', 'عنوان نامشخص')
     year = movie.get('year', '')
     rating = movie.get('rating', 'N/A')
-    source = movie.get('source', 'IMDB')
+    source = movie.get('source', 'TMDB')
     summary = movie.get('summary_fa', '')
     director = movie.get('director', 'نامشخص')
     cast = movie.get('cast', [])
     genres = movie.get('genres_fa', [])
     duration = movie.get('duration', 'نامشخص')
-    watch_link = movie.get('watch_link', movie.get('link', ''))
-    imdb_link = movie.get('link', '')
+    imdb_link = movie.get('imdb_link', 'https://www.imdb.com')
     
     # پردازش
     stars = get_stars(rating)
@@ -141,7 +140,6 @@ def format_movie_post(movie, time_name):
 ━━━━━━━━━━━━━━━━━━━
 
 🔗 [مشاهده در IMDB]({imdb_link})
-🎥 [لینک تماشای آنلاین]({watch_link})
 
 📡 {source}
 
